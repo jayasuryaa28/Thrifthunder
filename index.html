@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THRIFTHUNDER — Premium Thrift Fashion</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- TOAST -->
+  <div id="toast-container"></div>
+
+  <!-- FIREBASE LOADING OVERLAY -->
+  <div id="firebase-loading" style="
+    position:fixed;inset:0;background:#0a0a0a;z-index:99999;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  ">
+    <div style="font-family:'Playfair Display',serif;font-size:2rem;color:#c9a96e;letter-spacing:.15em;">THRIFTHUNDER</div>
+    <div style="width:40px;height:40px;border:3px solid #333;border-top-color:#c9a96e;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <p style="color:#666;font-family:sans-serif;font-size:.85rem;letter-spacing:.08em;">Loading collection…</p>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-icon"><i class="fa fa-trash-alt"></i></div>
+      <h3>Delete Product?</h3>
+      <p id="modal-msg">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn-danger" id="modal-confirm-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVBAR -->
+  <header id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="logo" onclick="showPage('home')">THRIFTHUNDER</a>
+      <div class="nav-center">
+        <div class="search-wrap">
+          <i class="fa fa-search search-icon"></i>
+          <input type="text" id="search-input" placeholder="Search brands, styles…" oninput="handleSearch(this.value)" />
+          <button class="search-clear" id="search-clear" onclick="clearSearch()"><i class="fa fa-times"></i></button>
+        </div>
+      </div>
+      <div class="nav-right">
+        <button class="icon-btn wishlist-btn" onclick="showPage('wishlist')" title="Wishlist">
+          <i class="fa fa-heart"></i>
+          <span class="nav-badge" id="wishlist-count">0</span>
+        </button>
+        <button class="icon-btn" onclick="toggleCart()" title="Cart">
+          <i class="fa fa-shopping-bag"></i>
+          <span class="nav-badge" id="cart-count">0</span>
+        </button>
+        <button class="icon-btn menu-toggle" onclick="toggleMenu()" title="Menu">
+          <span class="hamburger" id="hamburger">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE MENU -->
+  <nav id="mobile-menu">
+    <div class="menu-overlay" onclick="closeMenu()"></div>
+    <div class="menu-drawer">
+      <div class="menu-top">
+        <span class="logo">THRIFTHUNDER</span>
+        <button onclick="closeMenu()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="menu-links">
+        <a href="#" onclick="closeMenu();showPage('home')"><i class="fa fa-home"></i> Home</a>
+        <a href="#" onclick="closeMenu();scrollToSection('featured')"><i class="fa fa-star"></i> New Arrivals</a>
+        <a href="#" onclick="closeMenu();scrollToSection('products')"><i class="fa fa-th"></i> Shop All</a>
+        <a href="#" onclick="closeMenu();showPage('wishlist')"><i class="fa fa-heart"></i> Wishlist</a>
+        <a href="#" onclick="closeMenu();openAdmin()"><i class="fa fa-lock"></i> Admin</a>
+      </div>
+      <a href="https://wa.me/919042489937" target="_blank" class="menu-whatsapp">
+        <i class="fab fa-whatsapp"></i> WhatsApp Us
+      </a>
+    </div>
+  </nav>
+
+  <!-- CART SIDEBAR -->
+  <div id="cart-overlay" onclick="toggleCart()"></div>
+  <aside id="cart-sidebar">
+    <div class="cart-header">
+      <div>
+        <h3>Your Bag</h3>
+        <span class="cart-subtitle" id="cart-item-count-label">0 items</span>
+      </div>
+      <button class="cart-close-btn" onclick="toggleCart()"><i class="fa fa-times"></i></button>
+    </div>
+    <div id="cart-items"></div>
+    <div class="cart-footer" id="cart-footer">
+      <div class="cart-summary">
+        <div class="cart-summary-row">
+          <span>Subtotal</span>
+          <span id="cart-subtotal">₹0</span>
+        </div>
+        <div class="cart-summary-row cart-total-row">
+          <span>Total</span>
+          <span id="cart-total-price">₹0</span>
+        </div>
+      </div>
+      <button class="btn-whatsapp full-width" onclick="checkoutWhatsApp()">
+        <i class="fab fa-whatsapp"></i> Checkout via WhatsApp
+      </button>
+      <button class="btn-ghost full-width" style="margin-top:10px" onclick="clearCart()">Clear Bag</button>
+    </div>
+  </aside>
+
+  <!-- ═══════════════ HOME PAGE ═══════════════ -->
+  <div id="page-home" class="page active">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-visual">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+        <div class="hero-grid-lines"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-tag">
+          <span class="hero-dot"></span> New Season Drop
+        </div>
+        <h1 class="hero-title">
+          <span class="hero-title-line">Wear Stories.</span>
+          <span class="hero-title-line hero-title-accent">Make Thunder.</span>
+        </h1>
+        <p class="hero-sub">Premium pre-loved fashion curated for those who dare to be different. Rare finds, real style.</p>
+        <div class="hero-actions">
+          <button class="btn-primary btn-large" onclick="scrollToSection('products')">
+            Shop the Drop <i class="fa fa-arrow-right"></i>
+          </button>
+          <button class="btn-outline btn-large" onclick="scrollToSection('featured')">New Arrivals</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><span class="stat-num" id="stat-products">0</span><span class="stat-label">Pieces</span></div>
+          <div class="hero-stat-div"></div>
+          <div class="hero-stat"><span class="stat-num">100%</span><span class="stat-label">Authentic</span></div>
+          <div class="hero-stat-div"></div>
+          <div class="hero-stat"><span class="stat-num">⚡</span><span class="stat-label">Fast Delivery</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <div class="marquee-wrap">
+      <div class="marquee-track">
+        <span>VINTAGE FINDS</span><span class="dot">·</span>
+        <span>LUXURY THRIFT</span><span class="dot">·</span>
+        <span>RARE PIECES</span><span class="dot">·</span>
+        <span>CURATED DROPS</span><span class="dot">·</span>
+        <span>STREET LEGACY</span><span class="dot">·</span>
+        <span>CONSCIOUS FASHION</span><span class="dot">·</span>
+        <span>VINTAGE FINDS</span><span class="dot">·</span>
+        <span>LUXURY THRIFT</span><span class="dot">·</span>
+        <span>RARE PIECES</span><span class="dot">·</span>
+        <span>CURATED DROPS</span><span class="dot">·</span>
+        <span>STREET LEGACY</span><span class="dot">·</span>
+        <span>CONSCIOUS FASHION</span><span class="dot">·</span>
+      </div>
+    </div>
+
+    <!-- CATEGORY PILLS -->
+    <section class="category-section">
+      <div class="container">
+        <div class="category-pills">
+          <button class="cat-pill active" onclick="filterByCategory('all', this)">
+            <i class="fa fa-th"></i> All
+          </button>
+          <button class="cat-pill" onclick="filterByCategory('Tops', this)">Tops</button>
+          <button class="cat-pill" onclick="filterByCategory('Bottoms', this)">Bottoms</button>
+          <button class="cat-pill" onclick="filterByCategory('Outerwear', this)">Outerwear</button>
+          <button class="cat-pill" onclick="filterByCategory('Dresses', this)">Dresses</button>
+          <button class="cat-pill" onclick="filterByCategory('Co-ords', this)">Co-ords</button>
+          <button class="cat-pill" onclick="filterByCategory('Accessories', this)">Accessories</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURED / NEW ARRIVALS -->
+    <section id="featured" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <p class="section-eyebrow">Just Landed</p>
+            <h2 class="section-title">New Arrivals</h2>
+          </div>
+          <button class="btn-text" onclick="scrollToSection('products')">View All <i class="fa fa-arrow-right"></i></button>
+        </div>
+        <div id="featured-grid" class="product-grid"></div>
+      </div>
+    </section>
+
+    <!-- SHOP ALL -->
+    <section id="products" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <p class="section-eyebrow">The Collection</p>
+            <h2 class="section-title">Shop All</h2>
+          </div>
+          <div class="sort-wrap">
+            <select class="sort-select" onchange="handleSort(this.value)">
+              <option value="newest">Newest First</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-bar" id="brand-filter-bar">
+          <button class="filter-btn active" data-brand="all" onclick="filterProducts('all', this)">All</button>
+        </div>
+        <div id="all-products-grid" class="product-grid"></div>
+        <div id="no-products-home" class="empty-state" style="display:none">
+          <i class="fa fa-box-open"></i>
+          <h3>No products yet</h3>
+          <p>Add products from the Admin Panel to get started.</p>
+          <button class="btn-primary" onclick="openAdmin()">Go to Admin</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-inner container">
+        <div class="footer-brand">
+          <span class="logo footer-logo">THRIFTHUNDER</span>
+          <p>Premium thrift fashion from Chennai.<br/>Every piece has a story worth wearing.</p>
+          <a href="https://wa.me/919042489937" target="_blank" class="footer-wa-btn">
+            <i class="fab fa-whatsapp"></i> Chat with us
+          </a>
+        </div>
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <a href="#" onclick="scrollToSection('featured')">New Arrivals</a>
+          <a href="#" onclick="scrollToSection('products')">All Products</a>
+          <a href="#" onclick="showPage('wishlist')">Wishlist</a>
+        </div>
+        <div class="footer-col">
+          <h4>Info</h4>
+          <a href="#">Size Guide</a>
+          <a href="#">Returns Policy</a>
+          <a href="#">Shipping Info</a>
+        </div>
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <a href="https://wa.me/919042489937" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+          <a href="#"><i class="fab fa-instagram"></i> Instagram</a>
+          <a href="#" onclick="openAdmin()"><i class="fa fa-lock"></i> Admin</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 THRIFTHUNDER. All rights reserved. Made with ⚡ in Chennai.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ═══════════════ WISHLIST PAGE ═══════════════ -->
+  <div id="page-wishlist" class="page">
+    <div class="inner-page-wrap">
+      <div class="container">
+        <button class="back-btn" onclick="showPage('home')"><i class="fa fa-arrow-left"></i> Back</button>
+        <div class="section-header">
+          <div>
+            <p class="section-eyebrow">Saved Items</p>
+            <h2 class="section-title">Wishlist</h2>
+          </div>
+        </div>
+        <div id="wishlist-grid" class="product-grid"></div>
+        <div id="wishlist-empty" class="empty-state" style="display:none">
+          <i class="fa fa-heart"></i>
+          <h3>Your wishlist is empty</h3>
+          <p>Save your favourite pieces by tapping the heart icon.</p>
+          <button class="btn-primary" onclick="showPage('home')">Browse Collection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PRODUCT DETAIL PAGE ═══════════════ -->
+  <div id="page-product" class="page">
+    <div class="inner-page-wrap">
+      <div class="container">
+        <button class="back-btn" onclick="goBack()"><i class="fa fa-arrow-left"></i> Back</button>
+        <div class="product-detail-grid">
+          <!-- Gallery -->
+          <div class="product-gallery">
+            <div class="gallery-main-wrap">
+              <div class="gallery-zoom-hint"><i class="fa fa-search-plus"></i> Hover to zoom</div>
+              <div class="gallery-main" id="gallery-main-container">
+                <img id="detail-main-img" src="" alt="" />
+                <div class="gallery-zoom-lens" id="zoom-lens"></div>
+              </div>
+              <button class="gallery-nav prev" onclick="galleryNav(-1)"><i class="fa fa-chevron-left"></i></button>
+              <button class="gallery-nav next" onclick="galleryNav(1)"><i class="fa fa-chevron-right"></i></button>
+            </div>
+            <div class="gallery-thumbs" id="detail-thumbs"></div>
+          </div>
+          <!-- Info -->
+          <div class="product-info">
+            <div class="detail-badges" id="detail-badges"></div>
+            <p class="detail-brand" id="detail-brand"></p>
+            <h1 class="detail-name" id="detail-name"></h1>
+            <div class="detail-price-row">
+              <span class="detail-price" id="detail-price"></span>
+              <button class="wishlist-heart-btn" id="detail-wishlist-btn" onclick="toggleWishlistDetail()">
+                <i class="fa fa-heart"></i>
+              </button>
+            </div>
+            <p class="detail-desc" id="detail-desc"></p>
+            <div class="detail-meta-grid" id="detail-meta-grid"></div>
+            <div class="size-section" id="size-section">
+              <div class="size-label-row">
+                <p class="size-label">Select Size</p>
+              </div>
+              <div class="size-options" id="detail-sizes"></div>
+            </div>
+            <div class="detail-actions">
+              <button class="btn-primary btn-large detail-cart-btn" onclick="addToCartFromDetail()">
+                <i class="fa fa-shopping-bag"></i> Add to Bag
+              </button>
+              <button class="btn-whatsapp btn-large" onclick="buyNowFromDetail()">
+                <i class="fab fa-whatsapp"></i> Buy Now
+              </button>
+            </div>
+            <div class="detail-assurance">
+              <span><i class="fa fa-shield-alt"></i> Authentic Guarantee</span>
+              <span><i class="fa fa-undo"></i> Easy Returns</span>
+              <span><i class="fab fa-whatsapp"></i> WhatsApp Support</span>
+            </div>
+          </div>
+        </div>
+        <!-- Related Products -->
+        <div class="related-section">
+          <div class="section-header">
+            <div>
+              <p class="section-eyebrow">You may also like</p>
+              <h2 class="section-title" style="font-size:1.8rem">Related Pieces</h2>
+            </div>
+          </div>
+          <div id="related-grid" class="product-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SEARCH RESULTS PAGE ═══════════════ -->
+  <div id="page-search" class="page">
+    <div class="inner-page-wrap">
+      <div class="container">
+        <button class="back-btn" onclick="showPage('home');clearSearch()"><i class="fa fa-arrow-left"></i> Back</button>
+        <div class="section-header">
+          <div>
+            <p class="section-eyebrow">Search Results</p>
+            <h2 class="section-title" id="search-query-title"></h2>
+          </div>
+          <span class="result-count" id="search-result-count"></span>
+        </div>
+        <div id="search-results-grid" class="product-grid"></div>
+        <div id="search-empty" class="empty-state" style="display:none">
+          <i class="fa fa-search"></i>
+          <h3>No results found</h3>
+          <p id="search-empty-msg"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ADMIN LOGIN ═══════════════ -->
+  <div id="page-admin-login" class="page">
+    <div class="auth-wrap">
+      <div class="auth-box">
+        <div class="auth-logo">
+          <span class="logo">THRIFTHUNDER</span>
+          <span class="auth-label">Admin Panel</span>
+        </div>
+        <h2>Welcome Back</h2>
+        <p class="auth-sub">Enter your admin password to continue</p>
+        <div class="input-group">
+          <i class="fa fa-lock input-icon"></i>
+          <input type="password" id="admin-pass" class="admin-input" placeholder="Admin Password"
+            onkeydown="if(event.key==='Enter')adminLogin()" />
+          <button class="pass-toggle" onclick="togglePassVisibility()"><i class="fa fa-eye" id="pass-eye"></i></button>
+        </div>
+        <button class="btn-primary full-width" onclick="adminLogin()">Login to Dashboard</button>
+        <button class="btn-text full-width" style="margin-top:12px" onclick="showPage('home')">← Back to Store</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ADMIN DASHBOARD ═══════════════ -->
+  <div id="page-admin" class="page">
+    <div class="admin-layout">
+
+      <!-- Admin Sidebar -->
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <span class="logo" style="font-size:1.1rem">THRIFTHUNDER</span>
+          <span class="admin-tag">Admin</span>
+        </div>
+        <nav class="admin-nav">
+          <button class="admin-nav-btn active" onclick="switchAdminTab('dashboard', this)">
+            <i class="fa fa-chart-bar"></i> Dashboard
+          </button>
+          <button class="admin-nav-btn" onclick="switchAdminTab('add', this)">
+            <i class="fa fa-plus"></i> Add Product
+          </button>
+          <button class="admin-nav-btn" onclick="switchAdminTab('products', this)">
+            <i class="fa fa-box"></i> Products
+          </button>
+        </nav>
+        <button class="admin-exit-btn" onclick="showPage('home')">
+          <i class="fa fa-sign-out-alt"></i> Exit Admin
+        </button>
+      </aside>
+
+      <!-- Admin Content -->
+      <main class="admin-main">
+
+        <!-- DASHBOARD TAB -->
+        <div class="admin-tab active" id="tab-dashboard">
+          <div class="admin-page-header">
+            <h2>Dashboard</h2>
+            <span class="admin-date" id="admin-date"></span>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-blue"><i class="fa fa-box"></i></div>
+              <div class="stat-info">
+                <span class="stat-number" id="dash-total">0</span>
+                <span class="stat-label">Total Products</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-green"><i class="fa fa-check-circle"></i></div>
+              <div class="stat-info">
+                <span class="stat-number" id="dash-available">0</span>
+                <span class="stat-label">Available</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-red"><i class="fa fa-times-circle"></i></div>
+              <div class="stat-info">
+                <span class="stat-number" id="dash-sold">0</span>
+                <span class="stat-label">Sold Out</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-gold"><i class="fa fa-star"></i></div>
+              <div class="stat-info">
+                <span class="stat-number" id="dash-featured">0</span>
+                <span class="stat-label">Featured</span>
+              </div>
+            </div>
+          </div>
+          <div class="recent-products-wrap">
+            <h3>Recent Products</h3>
+            <div id="recent-products-list" class="recent-list"></div>
+          </div>
+        </div>
+
+        <!-- ADD/EDIT PRODUCT TAB -->
+        <div class="admin-tab" id="tab-add">
+          <div class="admin-page-header">
+            <h2 id="form-mode-title">Add New Product</h2>
+            <button class="btn-text" onclick="resetProductForm()"><i class="fa fa-redo"></i> Reset</button>
+          </div>
+
+          <div class="admin-form-grid">
+            <input type="hidden" id="edit-product-id" />
+
+            <!-- Basic Info -->
+            <div class="form-section">
+              <h4 class="form-section-title">Basic Information</h4>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Product Name *</label>
+                  <input class="admin-input" type="text" id="p-name" placeholder="e.g. Vintage Nike Windbreaker" />
+                </div>
+                <div class="form-group">
+                  <label>Brand *</label>
+                  <input class="admin-input" type="text" id="p-brand" placeholder="e.g. Nike, Zara, Vintage" />
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Price (₹) *</label>
+                  <div class="input-prefix-wrap">
+                    <span class="input-prefix">₹</span>
+                    <input class="admin-input" type="number" id="p-price" placeholder="999" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Category</label>
+                  <select class="admin-input" id="p-category">
+                    <option value="Tops">Tops</option>
+                    <option value="Bottoms">Bottoms</option>
+                    <option value="Outerwear">Outerwear</option>
+                    <option value="Dresses">Dresses</option>
+                    <option value="Co-ords">Co-ords</option>
+                    <option value="Accessories">Accessories</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Condition</label>
+                  <select class="admin-input" id="p-condition">
+                    <option value="Thrifted">Thrifted</option>
+                    <option value="New">New with Tags</option>
+                    <option value="Like New">Like New</option>
+                    <option value="Good">Good Condition</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <select class="admin-input" id="p-status">
+                    <option value="available">Available</option>
+                    <option value="soldout">Sold Out</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Sizes <small>(comma separated)</small></label>
+                  <input class="admin-input" type="text" id="p-sizes" placeholder="XS, S, M, L, XL" />
+                </div>
+                <div class="form-group">
+                  <label>Featured</label>
+                  <label class="toggle-label">
+                    <input type="checkbox" id="p-featured" />
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-text">Show in New Arrivals</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <textarea class="admin-input" id="p-desc" rows="4" placeholder="Describe the piece — fabric, fit, era, special details…"></textarea>
+              </div>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="form-section">
+              <h4 class="form-section-title">Product Images</h4>
+              <div class="upload-zone" id="upload-zone">
+                <div class="upload-zone-inner">
+                  <div class="upload-icon"><i class="fa fa-cloud-upload-alt"></i></div>
+                  <p class="upload-title">Drag & drop images here</p>
+                  <p class="upload-sub">or click to browse — JPG, PNG, WebP</p>
+                  <button type="button" class="btn-outline upload-choose-btn" onclick="document.getElementById('img-file-input').click()">
+                    <i class="fa fa-folder-open"></i> Choose Images
+                  </button>
+                  <input type="file" id="img-file-input" accept="image/*" multiple style="display:none" onchange="handleFileSelect(this.files)" />
+                </div>
+              </div>
+              <div class="upload-progress-wrap" id="upload-progress-wrap" style="display:none">
+                <div class="upload-progress-bar" id="upload-progress-bar"></div>
+                <span class="upload-progress-label" id="upload-progress-label">Processing…</span>
+              </div>
+              <div class="image-preview-grid" id="image-preview-grid"></div>
+              <p class="upload-hint"><i class="fa fa-info-circle"></i> First image will be the cover photo. Images upload to Firebase Storage.</p>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-primary btn-large" onclick="saveProduct()">
+                <i class="fa fa-save"></i> Save Product
+              </button>
+              <button class="btn-ghost" onclick="resetProductForm()">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRODUCTS LIST TAB -->
+        <div class="admin-tab" id="tab-products">
+          <div class="admin-page-header">
+            <h2>Products <span class="badge" id="admin-product-count">0</span></h2>
+            <div class="admin-list-controls">
+              <div class="search-wrap admin-search">
+                <i class="fa fa-search search-icon"></i>
+                <input type="text" class="admin-input" placeholder="Search products…" oninput="filterAdminList(this.value)" />
+              </div>
+              <button class="btn-primary" onclick="switchAdminTab('add', document.querySelector('.admin-nav-btn:nth-child(2)'))">
+                <i class="fa fa-plus"></i> Add New
+              </button>
+            </div>
+          </div>
+          <div id="admin-product-list" class="admin-product-list"></div>
+          <div id="admin-empty" class="empty-state" style="display:none">
+            <i class="fa fa-box-open"></i>
+            <h3>No products found</h3>
+            <p>Add your first product to get started.</p>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+  <script src="script.js"></script>
+</body>
+</html>
